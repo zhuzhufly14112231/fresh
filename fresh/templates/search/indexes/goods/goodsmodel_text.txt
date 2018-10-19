@@ -1,0 +1,9 @@
+{{ object.goods_name}}
+{{ object.desc}}
+{{ object.abstract}}
+{{object.pic}}
+{{object.id}}
+{{object.price}}
+{{object.unit}}
+
+

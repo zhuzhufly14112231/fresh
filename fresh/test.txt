@@ -1,0 +1,166 @@
+﻿Servlet 负责处理请求，发送响应数据
+一个 Servlet 默认只能处理一个 URL 请求
+
+Tomcat 是 Servlet 的容器，提供了运行 Servlet 程序所必备的条件
+Tomcat 可以同时运行多个 Servlet 程序
+
+Eclipse 集成 Tomcat 后，可以自动把写好的 WebApp 部署到 Tomcat 中
+部署/发布/上线/deploy：把写好的 WebApp 复制到 Tomcat 中
+	集成后默认发布在 workspace 中的 .metadata 文件夹中
+
+网址 = URL = 请求地址（Request URL）
+
+HTTP 协议规定了 Request 和 Response 数据的组织格式
+	Request：
+		请求行：请求方式（Method）和请求地址（URL）
+			请求方式：采用哪种方式发送数据给服务器
+				GET
+				POST
+				PUT
+				DELETE
+			请求地址：文件在网络中的地址
+		请求头：包含了客户端的相关信息
+		空行：什么也没有，起到分隔符的作用
+		请求体：包含客户端发送给服务器的数据
+
+		GET 和 POST 的区别在于发送给服务器的数据存储位置不同
+			GET 数据存在放在 URL 后
+				在 URL 中使用 ? 分隔网址和数据
+				数据以 name=value 的形式组织
+				多组数据之间以 & 分隔
+					?name=zhangsan&age=100&gender=man
+			POST 数据存放在请求体中
+				数据格式由客户端自动帮用户组织
+		
+			1. POST 相比 GET 更安全
+				URL 都能看到，请求体一般看不到
+			2. URL 长度有限制，GET 请求参数长度有限制
+				POST 没有限制
+
+	Response：
+		状态行：状态码和服务器地址
+			状态码：请求的处理的结果
+				2xx：请求成功
+				3xx：重定向
+				4xx：客户端（网页代码）出错了
+					404：Request URL 不正确
+					405：Request Method 不正确
+				5xx：服务器（Servlet 代码）出错了
+		响应头：包含服务器相关信息
+		响应正文：服务器发送给客户端的数据
+	
+
+Servlet：
+	doGet 处理 GET 请求
+	doPost 处理 POST 请求
+	
+	request 参数封装了请求相关的所有数据
+		request.getMethod();// 获取请求方式
+		request.getRequestURL(); // 获取请求地址
+		request.getHeader("header-key"); // 根据 key 获取请求头数据
+		request.getParameter("param-key"); // 根据 key 获取客户端发送的数据
+	response 参数封装了响应相关的所有数据
+		response.setStatus(200); // 设置状态码
+		response.setHeader("", "");// 设置响应头
+		response.getWriter().println(""); // 设置响应正文
+
+中文乱码处理方案：
+	请求中包含中文：
+		request.setCharacterEncoding("UTF-8");
+		
+	响应中包含中文：
+		response.setHeader("Content-Type", "text/html; charset=utf-8");
+
+
+web.xml 是 webApp 的配置文件
+	xml 是编程中很常用的一种文件格式，使用标签对组织数据
+
+	哪个 Servlet 处理哪一个 URL，需要在 web.xml 中进行配置
+	
+	servlet 标签用于给 servlet 类起一个名字
+	
+	<servlet>
+		<display-name>ComputerServlet</display-name>
+		<servlet-name>ComputerServlet</servlet-name>
+		<servlet-class>com.zhiyou100.servlet.ComputerServlet</servlet-class>
+	</servlet>
+	
+	servlet-mapping 标签用于绑定 servlet 和 URL
+	<servlet-mapping>
+		<servlet-name>ComputerServlet</servlet-name>
+		<url-pattern>/computer</url-pattern>
+	</servlet-mapping>
+	
+	一个 URL 只能交给一个 Servlet 进行处理，否则报错
+	
+	Servlet 和 URL 的绑定是 Eclipse 自动帮我们完成，
+	如果修改了 Servlet 名字还需要我们手动更新配置，
+	如果删除了 Servlet 还需要我们手动删除配置
+	
+	请求到达 Tomcat 后，Tomcat 去 web.xml 查询是否有对应的 url-pattern
+	如果没有，就返回 404，如果有，就查找对应的 servlet-name 和 servlet-class
+	如果找不到，就返回 500（ClassNotFound）
+	如果找到，就根据请求方法调用 doGet 或者 doPost 处理请求
+	如果 doGet 或者 doPost 不存在，就返回 405
+
+Servlet 的生命周期（从创建到销毁）	
+	默认情况下在第一次使用 Servlet 的时候会创建该 Servlet 的对象
+		创建 Servlet 会先后调用构造方法和 init 方法
+			构造方法用于创建对象
+			init 方法用于在对象创建后做一些自定义的操作
+			
+		如果在 web.xml 中配置了 load-on-startup
+		那么在 Tomcat 启动后会立即创建 Servlet 对象
+		
+	每次处理请求的时候会调用 service 方法
+		service 方法中会根据请求方式调用 doGet 或 doPost 处理请求
+
+	关闭服务器的时候会调用 destroy 方法
+
+
+controller = html + servlet
+
+登录程序：
+	一、划分模块，分析功能
+	二、数据库设计
+		CREATE DATABASE IF NOT EXISTS `zhiyou_107_test6`;
+		
+		USE `zhiyou_107_test6`;
+		
+		CREATE TABLE IF NOT EXISTS `user` (
+           `id` int PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+           `account` varchar(20) COMMENT '账号',
+           `password` varchar(20) COMMENT '密码'		   
+		) COMMENT '用户表';
+		
+		INSERT INTO `user`(account, password) VALUES('admin', 'admin');
+		INSERT INTO `user`(account, password) VALUES('zhangsan', '123456');
+	三、分模块编写代码
+		html + servlet：前台页面
+		service：后台逻辑
+		dao：数据库操作
+		
+		1. 封装复杂数据为 Model 类
+		2. 定义 service 和 dao 接口
+		3. 实现 dao 接口
+			复制 mysql 驱动到 WebContent/WEB-INF/lib 文件夹中
+		4. 实现 service 接口
+			声明 dao 属性，并直接赋值，进行绑定
+		5. 实现 servlet 和 html
+			声明 service 属性，并直接赋值，进行绑定
+
+作业：
+	1. HTTP 协议的组成
+	2. servlet 的声明周期
+	3. 完成注册功能
+	4. 完成搜索功能（根据账号进行模糊查询）
+
+
+
+
+
+
+
+
+
+
